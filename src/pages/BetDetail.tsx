@@ -17,6 +17,7 @@ import { Button } from '../components/ui/Button';
 import { JoinForm } from '../components/bet-detail/JoinForm';
 import { ShareButton } from '../components/bet-detail/ShareButton';
 import { ParticipantList } from '../components/bet-detail/ParticipantList';
+import { Timeline } from '../components/timeline/Timeline';
 
 type LoadState = 'loading' | 'not-found' | 'loaded';
 
@@ -155,6 +156,15 @@ export default function BetDetail() {
             onJoined={() => setJustJoined((v) => !v)}
           />
         )}
+      </div>
+
+      <div className="mt-8 border-t border-neutral-200 dark:border-neutral-800">
+        <Timeline
+          betId={bet.id}
+          currentUserId={user?.id}
+          canMessage={Boolean(myPosition)}
+          profilesById={profilesById}
+        />
       </div>
     </div>
   );
