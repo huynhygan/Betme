@@ -1,12 +1,14 @@
 # CLAUDE.md
 
 ## What this is
+
 A social betting app for friend groups. Users create friendly bets, invite
 each other, stake real-world things (money settled offline, dinner, favours),
 and settle them together. The product is the RECORD and the BANTER around it,
 not the wagering.
 
 ## Hard constraints — never violate these
+
 - The app NEVER holds, transfers, or processes money. There is no payments
   integration and no wallet. Stakes are descriptive text, never numeric
   currency columns. The app never computes a monetary balance.
@@ -17,10 +19,12 @@ not the wagering.
 - All tables have RLS enabled. No table is ever left unprotected "for now".
 
 ## Stack
+
 React + TypeScript, Vite, Tailwind, Supabase (Postgres + Auth + Realtime),
 deployed on Vercel. Supabase project region is Sydney.
 
 ## Conventions
+
 - Supabase types are generated into src/types/database.ts. Regenerate after
   every migration; never hand-edit that file.
 - All DB access goes through typed helpers in src/lib/queries/. Components
@@ -30,6 +34,7 @@ deployed on Vercel. Supabase project region is Sydney.
   validation. Client validation is UX, not security.
 
 ## Vocabulary — use these terms exactly, in code and UI
+
 - bet: the challenge itself. A side bet is a bet with parent_bet_id set.
 - clause: a conditional modifier on one person's stake. NOT a bet. Has no
   independent outcome and cannot resolve on its own.
