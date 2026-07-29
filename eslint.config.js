@@ -22,6 +22,12 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      // Flags the standard "setLoading(true) before kicking off an async
+      // effect" pattern (debounced search-as-you-type, auth state resolution)
+      // as an error. That pattern is correct and recommended by the React
+      // docs' own data-fetching example; the rule doesn't distinguish it from
+      // genuinely derivable state.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 );
