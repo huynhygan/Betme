@@ -24,3 +24,10 @@ export async function createProfile(input: TablesInsert<'profiles'>): Promise<Pr
   if (error) throw error;
   return data;
 }
+
+export async function getProfilesByIds(ids: string[]): Promise<Profile[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('profiles').select().in('id', ids);
+  if (error) throw error;
+  return data;
+}

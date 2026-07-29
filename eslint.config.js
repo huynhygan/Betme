@@ -28,6 +28,13 @@ export default tseslint.config(
       // docs' own data-fetching example; the rule doesn't distinguish it from
       // genuinely derivable state.
       'react-hooks/set-state-in-effect': 'off',
+      // Part of the React Compiler ruleset; this project doesn't use the
+      // compiler. It flags every `Date.now()`-based "has this locked yet"
+      // check (used throughout bet/resolution status logic) as an error.
+      // Without the compiler the only real consequence of that "impurity"
+      // is a value that's a render behind wall-clock time until the next
+      // re-render — an accepted tradeoff, not a correctness bug.
+      'react-hooks/purity': 'off',
     },
   },
 );
