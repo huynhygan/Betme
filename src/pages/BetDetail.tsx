@@ -10,6 +10,7 @@ import {
   type Position,
 } from '../lib/queries/bets';
 import { getProfilesByIds, type Profile } from '../lib/queries/profiles';
+import { getClausesForPositions, type Clause } from '../lib/queries/clauses';
 import { VISIBILITY_LABELS } from '../lib/vocabulary';
 import { Screen, ScreenTitle, ScreenSubtitle } from '../components/ui/Screen';
 import { Spinner } from '../components/ui/Spinner';
@@ -17,6 +18,7 @@ import { Button } from '../components/ui/Button';
 import { JoinForm } from '../components/bet-detail/JoinForm';
 import { ShareButton } from '../components/bet-detail/ShareButton';
 import { ParticipantList } from '../components/bet-detail/ParticipantList';
+import { AddClauseForm } from '../components/bet-detail/AddClauseForm';
 import { Timeline } from '../components/timeline/Timeline';
 
 type LoadState = 'loading' | 'not-found' | 'loaded';
@@ -31,7 +33,8 @@ export default function BetDetail() {
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [profilesById, setProfilesById] = useState<Record<string, Profile>>({});
-  const [justJoined, setJustJoined] = useState(false);
+  const [clausesByPositionId, setClausesByPositionId] = useState<Record<string, Clause[]>>({});
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -48,12 +51,20 @@ export default function BetDetail() {
           getOutcomes(id!),
           getPositions(id!),
         ]);
-        const profiles = await getProfilesByIds(positionRows.map((p) => p.user_id));
+        const [profiles, clauseRows] = await Promise.all([
+          getProfilesByIds(positionRows.map((p) => p.user_id)),
+          getClausesForPositions(positionRows.map((p) => p.id)),
+        ]);
         if (cancelled) return;
         setBet(betRow);
         setOutcomes(outcomeRows);
         setPositions(positionRows);
         setProfilesById(Object.fromEntries(profiles.map((p) => [p.id, p])));
+        const grouped: Record<string, Clause[]> = {};
+        for (const clause of clauseRows) {
+          (grouped[clause.position_id] ??= []).push(clause);
+        }
+        setClausesByPositionId(grouped);
         setState('loaded');
       } catch {
         if (!cancelled) setState('not-found');
@@ -64,7 +75,7 @@ export default function BetDetail() {
     return () => {
       cancelled = true;
     };
-  }, [id, justJoined]);
+  }, [id, refreshKey]);
 
   if (state === 'loading' || authLoading) {
     return (
@@ -124,6 +135,7 @@ export default function BetDetail() {
           positions={positions}
           outcomesById={outcomesById}
           profilesById={profilesById}
+          clausesByPositionId={clausesByPositionId}
         />
       </div>
 
@@ -138,11 +150,19 @@ export default function BetDetail() {
             </Link>
           </div>
         ) : myPosition ? (
-          <div className="rounded-2xl border border-accent-300 bg-accent-50 p-4 dark:border-accent-800 dark:bg-accent-950/40">
-            <p className="font-medium text-neutral-900 dark:text-neutral-50">You're in</p>
-            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
-              Staked on {outcomesById[myPosition.outcome_id]?.label}: {myPosition.stake_label}
-            </p>
+          <div className="flex flex-col gap-3 rounded-2xl border border-accent-300 bg-accent-50 p-4 dark:border-accent-800 dark:bg-accent-950/40">
+            <div>
+              <p className="font-medium text-neutral-900 dark:text-neutral-50">You're in</p>
+              <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
+                Staked on {outcomesById[myPosition.outcome_id]?.label}: {myPosition.stake_label}
+              </p>
+            </div>
+            {!isLocked && (
+              <AddClauseForm
+                positionId={myPosition.id}
+                onAdded={() => setRefreshKey((k) => k + 1)}
+              />
+            )}
           </div>
         ) : isLocked ? (
           <p className="rounded-2xl border border-neutral-200 p-4 text-center text-neutral-500 dark:border-neutral-800">
@@ -153,7 +173,7 @@ export default function BetDetail() {
             betId={bet.id}
             userId={user.id}
             outcomes={outcomes}
-            onJoined={() => setJustJoined((v) => !v)}
+            onJoined={() => setRefreshKey((k) => k + 1)}
           />
         )}
       </div>
