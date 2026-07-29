@@ -578,8 +578,15 @@ create policy bets_select_visible on bets
 create policy bets_insert_own on bets
   for insert to authenticated with check (creator_id = auth.uid());
 
+-- with check restricts the creator to draft-editing and publishing only —
+-- the transitions to 'locked'/'resolved'/'voided' happen exclusively via
+-- lock_expired_bets() and the resolve-bet edge function, both of which run
+-- as the service role and so bypass RLS entirely. Without this check a
+-- client could set status = 'resolved' directly and skip resolution.
 create policy bets_update_creator on bets
-  for update to authenticated using (creator_id = auth.uid());
+  for update to authenticated
+  using (creator_id = auth.uid())
+  with check (creator_id = auth.uid() and status in ('draft', 'open'));
 
 -- outcomes: same visibility as the parent bet; only the creator can add them
 -- (only while the bet is still a draft, enforced by the with check subquery).
