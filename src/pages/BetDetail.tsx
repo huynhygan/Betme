@@ -11,6 +11,13 @@ import {
 } from '../lib/queries/bets';
 import { getProfilesByIds, type Profile } from '../lib/queries/profiles';
 import { getClausesForPositions, type Clause } from '../lib/queries/clauses';
+import {
+  getResolution,
+  getResolutionResponses,
+  type Resolution,
+  type ResolutionResponse,
+} from '../lib/queries/resolutions';
+import { getSettlementsForBet, type Settlement } from '../lib/queries/settlements';
 import { VISIBILITY_LABELS } from '../lib/vocabulary';
 import { Screen, ScreenTitle, ScreenSubtitle } from '../components/ui/Screen';
 import { Spinner } from '../components/ui/Spinner';
@@ -19,6 +26,8 @@ import { JoinForm } from '../components/bet-detail/JoinForm';
 import { ShareButton } from '../components/bet-detail/ShareButton';
 import { ParticipantList } from '../components/bet-detail/ParticipantList';
 import { AddClauseForm } from '../components/bet-detail/AddClauseForm';
+import { ResolutionPanel } from '../components/bet-detail/ResolutionPanel';
+import { SettlementPanel } from '../components/bet-detail/SettlementPanel';
 import { Timeline } from '../components/timeline/Timeline';
 
 type LoadState = 'loading' | 'not-found' | 'loaded';
@@ -34,6 +43,9 @@ export default function BetDetail() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [profilesById, setProfilesById] = useState<Record<string, Profile>>({});
   const [clausesByPositionId, setClausesByPositionId] = useState<Record<string, Clause[]>>({});
+  const [resolution, setResolution] = useState<Resolution | null>(null);
+  const [responses, setResponses] = useState<ResolutionResponse[]>([]);
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -65,6 +77,30 @@ export default function BetDetail() {
           (grouped[clause.position_id] ??= []).push(clause);
         }
         setClausesByPositionId(grouped);
+
+        if (
+          betRow.status === 'locked' ||
+          betRow.status === 'resolved' ||
+          betRow.status === 'voided'
+        ) {
+          const resolutionRow = await getResolution(id!);
+          setResolution(resolutionRow);
+          if (resolutionRow) {
+            setResponses(await getResolutionResponses(resolutionRow.id));
+          } else {
+            setResponses([]);
+          }
+        } else {
+          setResolution(null);
+          setResponses([]);
+        }
+
+        if (betRow.status === 'resolved') {
+          setSettlements(await getSettlementsForBet(id!));
+        } else {
+          setSettlements([]);
+        }
+
         setState('loaded');
       } catch {
         if (!cancelled) setState('not-found');
@@ -176,6 +212,26 @@ export default function BetDetail() {
             onJoined={() => setRefreshKey((k) => k + 1)}
           />
         )}
+      </div>
+
+      <div className="mt-8 flex flex-col gap-4">
+        <ResolutionPanel
+          bet={bet}
+          outcomes={outcomes}
+          positions={positions}
+          myPosition={myPosition}
+          resolution={resolution}
+          responses={responses}
+          profilesById={profilesById}
+          currentUserId={user?.id}
+          onChanged={() => setRefreshKey((k) => k + 1)}
+        />
+        <SettlementPanel
+          settlements={settlements}
+          currentUserId={user?.id}
+          profilesById={profilesById}
+          onChanged={() => setRefreshKey((k) => k + 1)}
+        />
       </div>
 
       <div className="mt-8 border-t border-neutral-200 dark:border-neutral-800">
