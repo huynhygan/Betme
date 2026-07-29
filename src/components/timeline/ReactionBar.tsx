@@ -76,6 +76,7 @@ export function ReactionBar({ eventId, reactions, currentUserId, onToggle }: Pro
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
+          aria-label="Add a reaction"
           className={`rounded-full px-1.5 py-0.5 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 ${
             counts.size === 0
               ? 'opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100'

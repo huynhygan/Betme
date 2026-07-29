@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Screen } from './ui/Screen';
-import { Spinner } from './ui/Spinner';
+import { Skeleton } from './ui/Skeleton';
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, profile, loading } = useAuth();
@@ -11,8 +11,10 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <Screen>
-        <div className="flex justify-center">
-          <Spinner className="h-8 w-8" />
+        <div role="status" aria-label="Loading" className="flex flex-col gap-3">
+          <Skeleton className="h-7 w-2/3" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="mt-4 h-12 w-full rounded-xl" />
         </div>
       </Screen>
     );

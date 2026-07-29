@@ -20,7 +20,7 @@ import {
 import { getSettlementsForBet, type Settlement } from '../lib/queries/settlements';
 import { VISIBILITY_LABELS } from '../lib/vocabulary';
 import { Screen, ScreenTitle, ScreenSubtitle } from '../components/ui/Screen';
-import { Spinner } from '../components/ui/Spinner';
+import { BetDetailSkeleton } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
 import { JoinForm } from '../components/bet-detail/JoinForm';
 import { ShareButton } from '../components/bet-detail/ShareButton';
@@ -114,13 +114,7 @@ export default function BetDetail() {
   }, [id, refreshKey]);
 
   if (state === 'loading' || authLoading) {
-    return (
-      <Screen>
-        <div className="flex justify-center">
-          <Spinner className="h-8 w-8" />
-        </div>
-      </Screen>
-    );
+    return <BetDetailSkeleton />;
   }
 
   if (state === 'not-found' || !bet) {
